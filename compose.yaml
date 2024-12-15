@@ -1,0 +1,12 @@
+services:
+  php:
+    build:
+        context: ./docker/php
+    container_name: "${PROJECT_NAME}_php"
+    environment:
+      PHP_IDE_CONFIG: serverName=my-ide
+    extra_hosts:
+        - "host.docker.internal:host-gateway"
+    volumes:
+        - ./:/app:cached
+        - ./docker/php/20-xdebug.ini:/usr/local/etc/php/conf.d/20-xdebug.ini:cached

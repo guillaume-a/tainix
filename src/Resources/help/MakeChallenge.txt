@@ -1,0 +1,5 @@
+The <info>%command.name%</info> command generates a new set of file to start a Tainix Challenge:
+
+<info>php %command.full_name% PIERRE_FEUILLE_CISEAUX</info>
+
+If the argument is missing, the command will ask for the challenge code name interactively.
