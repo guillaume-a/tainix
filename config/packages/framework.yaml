@@ -7,6 +7,10 @@ framework:
 
     #esi: true
     #fragments: true
+    http_client:
+        scoped_clients:
+            tainix_api.client:
+                base_uri: "%env(TAINIX_BASE_URI)%"
 
 when@test:
     framework:

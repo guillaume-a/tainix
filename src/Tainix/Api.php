@@ -6,6 +6,7 @@ use App\Tainix\Request\GameResponseRequest;
 use App\Tainix\Response\GameResponse;
 use App\Tainix\Response\GameStart;
 use App\Tainix\Response\Sample;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
@@ -13,17 +14,12 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 final readonly class Api
 {
-    private const string TAINIX_URL = 'https://tainix.fr/api';
-    //    private const TAINIX_URL_ENGINES_LIST = '/engines/list';
-    //    private const TAINIX_URL_ENGINE_SAMPLE = '/engines/sample/';
-
-    //    private const TAINIX_URL_ENGINE_SAMPLE = '/games/start/KEY/CODE'; => TOKEN + INPUT
-    //    private const TAINIX_URL_ENGINE_SAMPLE = '/games/response/TOKEN/{{response}}';
-
     public function __construct(
-        private HttpClientInterface $client,
+        private HttpClientInterface $tainixApiClient,
         private SerializerInterface $serializer,
         private CacheInterface $cache,
+        #[Autowire(env: 'TAINIX_KEY')]
+        private string $token,
     ) {
     }
 
@@ -32,7 +28,7 @@ final readonly class Api
         return $this->cache->get('tainix-sample-'.$challenge, function (ItemInterface $item) use ($challenge) {
             $item->expiresAfter(3600);
 
-            $response = $this->client->request('GET', self::TAINIX_URL.'/engines/sample/'.$challenge.'/'.($_ENV['TAINIX_KEY'] ?? ''));
+            $response = $this->tainixApiClient->request('GET', '/api/engines/sample/'.$challenge.'/'.$this->token);
 
             return $this->serializer->deserialize($response->getContent(), Sample::class, 'json');
         });
@@ -40,7 +36,7 @@ final readonly class Api
 
     public function gameStart($challenge): GameStart
     {
-        $response = $this->client->request('GET', self::TAINIX_URL.'/games/start/'.($_ENV['TAINIX_KEY'] ?? '').'/'.$challenge);
+        $response = $this->tainixApiClient->request('GET', '/api/games/start/'.$this->token.'/'.$challenge);
 
         return $this->serializer->deserialize($response->getContent(), GameStart::class, 'json');
     }
@@ -51,7 +47,7 @@ final readonly class Api
 
         $gameResponseJson = $this->serializer->serialize($gameResponse, 'json');
 
-        $response = $this->client->request('GET', self::TAINIX_URL.'/games/response/'.$token.'/'.base64_encode($gameResponseJson));
+        $response = $this->tainixApiClient->request('GET', '/api/games/response/'.$token.'/'.base64_encode($gameResponseJson));
 
         return $this->serializer->deserialize($response->getContent(), GameResponse::class, 'json');
     }
